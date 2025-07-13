@@ -5,6 +5,7 @@ pipeline {
     options{
         timeout(time: 30, unit: 'MINUTES')
         disableConcurrentBuilds()
+        ansiColor('xterm')
     }
     parameters {
         choice(name: 'ACTION', choices: ['Apply', 'Destroy'], description: 'Select Action')
@@ -12,8 +13,10 @@ pipeline {
     stages {
         stage('Init') {
             steps {
-                sh 'cd 01-vpc'
-                sh 'terraform init -reconfigure'
+                sh """
+                    cd 01-vpc
+                    terraform plan -out=tfplan
+                """
             }
         }
         stage('Plan') {
