@@ -11,19 +11,23 @@ pipeline {
         choice(name: 'ACTION', choices: ['Apply', 'Destroy'], description: 'Select Action')
     }
     stages {
-        stage('Init') {
+        stage('Init and Plan') {
             steps {
-                sh """
-                    cd 01-vpc
-                    terraform plan -out=tfplan
-                """
-            }
+                withAWS(region: 'us-east-1', credentials: 'aws-cred') {
+                    sh """
+                        cd 01-vpc
+                        terraform init -reconfigure
+                        terraform plan -out=tfplan
+                    """
+                }
         }
         stage('Plan') {
             steps {
                 withAWS(region: 'us-east-1', credentials: 'aws-cred') {
-                    sh 'cd 01-vpc'
-                    sh 'terraform plan -out=tfplan'
+                    sh """
+                        cd 01-vpc
+                        terraform plan -out=tfplan
+                    """
                 }
             }
         }
