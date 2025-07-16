@@ -62,7 +62,7 @@ pipeline {
                 }
                 stage('EKS') {
                     when {
-                        expression {params.ACTION == 'destroy'}
+                        expression {params.ACTION == 'apply'}
                     }
                     steps {
                         build job: '30-eks', parameters: [string(name: 'ACTION', value: "apply")], wait: false
