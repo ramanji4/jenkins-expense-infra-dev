@@ -31,13 +31,42 @@ pipeline {
                 withAWS(region: 'us-east-1', credentials: 'aws-cred') {
                     sh """
                         cd 10-sg
-                        if [ "${params.ACTION}" = "Apply" ]
+                        if [ ${params.ACTION} == 'Apply' ]
                         then
                             terraform apply -auto-approve tfplan
-                        else
+                        elif [ ${params.ACTION} = 'Destroy' ]
+                        then
                             terraform destroy -auto-approve
                         fi
                     """
+                }
+            }
+        }
+        stage ('Destroy VPC') {
+            when {
+                expression {params.ACTION == 'destroy'}
+            }
+            steps {
+                build job: '01-vpc', parameters: [string(name: 'ACTION', value: "destroy")], wait: false
+            }
+        }
+        stage('Parallel In Sequential') {
+            parallel {
+                stage('Bastion') {
+                    when {
+                        expression {params.ACTION == 'apply'}
+                    }
+                    steps {
+                        build job: '20-bastion', parameters: [string(name: 'ACTION', value: "apply")], wait: false
+                    }
+                }
+                stage('EKS') {
+                    when {
+                        expression {params.ACTION == 'destroy'}
+                    }
+                    steps {
+                        build job: '30-eks', parameters: [string(name: 'ACTION', value: "apply")], wait: false
+                    }
                 }
             }
         }
