@@ -15,7 +15,7 @@ pipeline {
             steps {
                 withAWS(region: 'us-east-1', credentials: 'aws-cred') {
                     sh """
-                        cd 10-sg
+                        cd 70-cdn
                         terraform init -reconfigure
                         terraform plan -out=tfplan
                     """
@@ -30,7 +30,7 @@ pipeline {
             steps {
                 withAWS(region: 'us-east-1', credentials: 'aws-cred') {
                     sh """
-                        cd 10-sg
+                        cd 70-cdn
                         if [ ${params.ACTION} == 'apply' ]
                         then
                             terraform apply -auto-approve tfplan
@@ -42,54 +42,46 @@ pipeline {
                 }
             }
         }
-        stage ('Destroy VPC') {
+        stage('Parallel-1') {
             when {
                 expression {params.ACTION == 'destroy'}
             }
-            steps {
-                build job: '00-vpc', parameters: [string(name: 'ACTION', value: "destroy")], wait: false
-            }
-        }
-        stage('Parallel-1') {
-            when {
-                expression {params.ACTION == 'apply'}
-            }
             parallel {
-                stage('Bastion') {
+                stage('ALB') {
                     steps {
-                        build job: '20-bastion', parameters: [string(name: 'ACTION', value: "apply")], wait: false
-                    }
-                }
-                stage('EKS') {
-                    steps {
-                        build job: '30-eks', parameters: [string(name: 'ACTION', value: "apply")], wait: false
-                    }
-                }
-                stage('ACM') {
-                    steps {
-                        build job: '40-acm', parameters: [string(name: 'ACTION', value: "apply")], wait: false
+                        build job: '60-alb', parameters: [string(name: 'ACTION', value: "destroy")], wait: false
                     }
                 }
                 stage('ECR') {
                     steps {
-                        build job: '50-ecr', parameters: [string(name: 'ACTION', value: "apply")], wait: false
+                        build job: '50-ecr', parameters: [string(name: 'ACTION', value: "destroy")], wait: false
+                    }
+                }
+                stage('ACM') {
+                    steps {
+                        build job: '40-acm', parameters: [string(name: 'ACTION', value: "destroy")], wait: false
+                    }
+                }
+                stage('EKS') {
+                    steps {
+                        build job: '30-eks', parameters: [string(name: 'ACTION', value: "destroy")], wait: false
+                    }
+                }
+                stage('Bastion') {
+                    steps {
+                        build job: '20-bastion', parameters: [string(name: 'ACTION', value: "destroy")], wait: false
                     }
                 }
             }
         }
         stage('Parallel-2') {
             when {
-                expression {params.ACTION == 'apply'}
+                expression {params.ACTION == 'destroy'}
             }
             parallel {
-                stage('ALB') {
+                stage('destroy SG') {
                     steps {
-                        build job: '60-alb', parameters: [string(name: 'ACTION', value: "apply")], wait: false
-                    }
-                }
-                stage('CDN') {
-                    steps {
-                        build job: '70-cdn', parameters: [string(name: 'ACTION', value: "apply")], wait: false
+                        build job: '10-sg', parameters: [string(name: 'ACTION', value: "destroy")], wait: false
                     }
                 }
             }

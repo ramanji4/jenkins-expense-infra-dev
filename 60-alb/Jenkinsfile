@@ -15,7 +15,7 @@ pipeline {
             steps {
                 withAWS(region: 'us-east-1', credentials: 'aws-cred') {
                     sh """
-                        cd 30-eks
+                        cd 60-alb
                         terraform init -reconfigure
                         terraform plan -out=tfplan
                     """
@@ -30,7 +30,7 @@ pipeline {
             steps {
                 withAWS(region: 'us-east-1', credentials: 'aws-cred') {
                     sh """
-                        cd 30-eks
+                        cd 60-alb
                         if [ ${params.ACTION} == 'apply' ]
                         then
                             terraform apply -auto-approve tfplan
