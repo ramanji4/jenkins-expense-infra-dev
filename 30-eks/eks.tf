@@ -1,6 +1,6 @@
 resource "aws_key_pair" "eks" {
   key_name   = "eks"
-  public_key = file("c:/devops/key pair/eks.pub")
+  public_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIK94gOc3QxrkQwphicAmD774oKOLyuAf/zjOM7Tf4n1e ram83@Ramanjaneyulu"
 }
 
 
