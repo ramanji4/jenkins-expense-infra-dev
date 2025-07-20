@@ -65,11 +65,6 @@ pipeline {
                         build job: '30-eks', parameters: [string(name: 'ACTION', value: "apply")], wait: false
                     }
                 }
-                stage('ACM') {
-                    steps {
-                        build job: '40-acm', parameters: [string(name: 'ACTION', value: "apply")], wait: false
-                    }
-                }
                 stage('ECR') {
                     steps {
                         build job: '50-ecr', parameters: [string(name: 'ACTION', value: "apply")], wait: false
@@ -82,6 +77,11 @@ pipeline {
                 expression {params.ACTION == 'apply'}
             }
             parallel {
+                stage('ACM') {
+                    steps {
+                        build job: '40-acm', parameters: [string(name: 'ACTION', value: "apply")]
+                    }
+                }
                 stage('ALB') {
                     steps {
                         build job: '60-alb', parameters: [string(name: 'ACTION', value: "apply")], wait: false
